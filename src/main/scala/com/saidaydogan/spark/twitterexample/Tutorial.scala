@@ -3,6 +3,8 @@ package com.saidaydogan.spark.twitterexample
 import java.io.File
 
 import com.google.gson.Gson
+import org.apache.hadoop.fs.{FileSystem, FileUtil}
+import org.apache.spark.sql.{SQLContext, SaveMode}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.twitter.TwitterUtils
 import org.apache.spark.streaming.{Seconds, StreamingContext}
@@ -33,30 +35,35 @@ object Tutorial {
 
     val tweetStream = TwitterUtils.createStream(ssc, Utils.getAuth).filter(_.getLang == "tr")
     val users = tweetStream.map(_.getUser)
-    val recentUsers = users.map(f=> (f.getName, f.getScreenName)).reduceByKeyAndWindow(_ + _, Seconds(60))
+    val recentUsers = users.map(f => (f.getName, f.getScreenName)).reduceByKeyAndWindow(_ + _, Seconds(60))
 
     recentUsers.foreachRDD(rdd => {
       println("\n Son 1 dakika içerisinde yazan kişiler (%s kişi):".format(rdd.count()))
-      rdd.foreach{
-        case (user, tag) => println("%s <-> %s".format(user,tag))
+      rdd.foreach {
+        case (user, tag) => println("%s <-> %s".format(user, tag))
 
       }
     })
 
 
-//    val tweets = tweetStream.map(gson.toJson(_))
-//
-//    tweets.foreachRDD((rdd, time) => {
-//      val count = rdd.count()
-//      if (count > 0) {
-//        val outputRDD = rdd.repartition(1)
-//        outputRDD.saveAsTextFile(outputDir + "/tweets_" + time.milliseconds.toString)
-//        numTweetsCollected += count
-//        if (numTweetsCollected > 25) {
-//          println(numTweetsCollected + " adet tweet oldu!!")
-//        }
-//      }
-//    })
+    val tweets = tweetStream.map(gson.toJson(_))
+
+    tweets.foreachRDD((rdd, time) => {
+      val sqlContext = SQLContext.getOrCreate(rdd.sparkContext)
+      import sqlContext.implicits._
+
+      val count = rdd.count()
+      if (count > 0) {
+//        rdd.coalesce(1).saveAsTextFile(outputDir + "\\tweets\\" + time.milliseconds.toString + ".tweets")
+        rdd.coalesce(1).toDF().write.mode(SaveMode.Append).json(outputDir + "\\tweets")
+
+
+        numTweetsCollected += count
+        if (numTweetsCollected > 25) {
+          println(numTweetsCollected + " adet tweet oldu!!")
+        }
+      }
+    })
 
     ssc.start()
     ssc.awaitTermination()

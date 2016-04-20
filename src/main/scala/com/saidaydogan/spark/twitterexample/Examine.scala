@@ -20,7 +20,8 @@ object Examine {
     val tweetDir = "C:\\TwitterExample"
 
 
-    val tweets = sc.textFile("C:\\TwitterExample\\tweets_1461133450000\\part-00000")
+    val tweets = sc.textFile("C:\\TwitterExample\\tweets\\part-r*")
+    println(tweets.count() + " Adet tweet okundu")
     println("------------Sample JSON Tweets-------")
     for (tweet <- tweets.take(5)) {
       println(gson.toJson(jsonParser.parse(tweet)))
