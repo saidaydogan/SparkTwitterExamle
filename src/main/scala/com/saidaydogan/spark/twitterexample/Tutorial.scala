@@ -30,23 +30,33 @@ object Tutorial {
 
     val ssc = new StreamingContext(sc, Seconds(10))
 
-//    val filter = new FilterQuery()
-//    filter.language("tr")
 
     val tweetStream = TwitterUtils.createStream(ssc, Utils.getAuth).filter(_.getLang == "tr")
-      .map(gson.toJson(_))
+    val users = tweetStream.map(_.getUser)
+    val recentUsers = users.map(f=> (f.getName, f.getScreenName)).reduceByKeyAndWindow(_ + _, Seconds(60))
 
-    tweetStream.foreachRDD((rdd, time) => {
-      val count = rdd.count()
-      if (count > 0) {
-        val outputRDD = rdd.repartition(1)
-        outputRDD.saveAsTextFile(outputDir + "/tweets_" + time.milliseconds.toString)
-        numTweetsCollected += count
-        if (numTweetsCollected > 25) {
-          println(numTweetsCollected + " adet tweet oldu!!")
-        }
+    recentUsers.foreachRDD(rdd => {
+      println("\n Son 1 dakika içerisinde yazan kişiler (%s kişi):".format(rdd.count()))
+      rdd.foreach{
+        case (user, tag) => println("%s <-> %s".format(user,tag))
+
       }
     })
+
+
+//    val tweets = tweetStream.map(gson.toJson(_))
+//
+//    tweets.foreachRDD((rdd, time) => {
+//      val count = rdd.count()
+//      if (count > 0) {
+//        val outputRDD = rdd.repartition(1)
+//        outputRDD.saveAsTextFile(outputDir + "/tweets_" + time.milliseconds.toString)
+//        numTweetsCollected += count
+//        if (numTweetsCollected > 25) {
+//          println(numTweetsCollected + " adet tweet oldu!!")
+//        }
+//      }
+//    })
 
     ssc.start()
     ssc.awaitTermination()
