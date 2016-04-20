@@ -17,10 +17,10 @@ object Utils {
 
 
   def getAuth = {
-    val tconf = new ConfigurationBuilder().setOAuthConsumerKey("mEvaBY40IOZQT6VxYJexiA")
-      .setOAuthConsumerSecret("7yw2ECEMdxW0wArNdCxtKOxOONEUxNgqjJOXSAsxGg")
-      .setOAuthAccessToken("334072978-i2YnWNFK4DFsihzfEqzKfs2aoqz7LAgP2CM03HkY")
-      .setOAuthAccessTokenSecret("6hCYbLC1o3lP17jOTy5mwQqUL7JbkDp7zulEhbjlH4")
+    val tconf = new ConfigurationBuilder().setOAuthConsumerKey("setOAuthConsumerKey")
+      .setOAuthConsumerSecret("setOAuthConsumerSecret")
+      .setOAuthAccessToken("setOAuthAccessToken")
+      .setOAuthAccessTokenSecret("setOAuthAccessTokenSecret")
       .build()
 
     Some(new OAuthAuthorization(tconf))
